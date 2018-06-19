@@ -15,7 +15,7 @@ from sklearn.base import (  # type: ignore
 from sklearn.metrics.scorer import check_scoring  # type: ignore
 
 from eli5.permutation_importance import get_score_importances
-
+from multiprocess import Pool
 
 CAVEATS_CV_NONE = """
 Feature importances are computed on the same data as used for training, 
@@ -203,13 +203,23 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         feature_importances = []  # type: List
         base_scores = []  # type: List[float]
-        for train, test in cv.split(X, y, groups):
+        pool = Pool(8) #, maxtasksperchild=1)
+        result = pool.map(
+        lambda train, test:
             est = clone(self.estimator).fit(X[train], y[train], **fit_params)
             score_func = partial(self.scorer_, est)
             _base_score, _importances = self._get_score_importances(
                 score_func, X[test], y[test])
-            base_scores.extend([_base_score] * len(_importances))
-            feature_importances.extend(_importances)
+            ([_base_score] * len(_importances),_importances)
+        ,cv.split(X, y, groups),chunksize=1)
+        #close and join the pools
+        pool.close()
+        pool.join()
+        #unpack tuples to lists and flatten
+        flatten = lambda z: [x for y in z for x in y]
+        base_scores = flatten(map(list, zip(*result))[0])
+        feature_importances = flatten(map(list, zip(*result))[1])        
+
         return base_scores, feature_importances
 
     def _non_cv_scores_importances(self, X, y):
