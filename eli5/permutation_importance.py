@@ -86,12 +86,12 @@ def get_score_importances(
     rng = check_random_state(random_state)
     base_score = score_func(X, y)
     seed0 = rng.randint(2**32)
-    pool = Pool(n_jobs)
+    pool = Pool(n_jobs, maxtasksperchild=1)
     result = pool.map(
         lambda seed: _get_scores_shufled(score_func, X, y,
                                          columns_to_shuffle=columns_to_shuffle,
                                          random_state=np.random.RandomState(seed)),
-             range(seed0, seed0+n_iter))
+             range(seed0, seed0+n_iter), chunksize=1)
     scores_decreases = []
     for scores_shuffled in result:
         scores_decreases.append(-scores_shuffled + base_score)
