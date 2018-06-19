@@ -91,7 +91,7 @@ def get_score_importances(
         lambda seed: _get_scores_shufled(score_func, X, y,
                                          columns_to_shuffle=columns_to_shuffle,
                                          random_state=np.random.RandomState(seed)),
-             range(seed0, seed0+n_iter)), chunksize=250)
+             range(seed0, seed0+n_iter), chunksize=250)
     pool.close()
     pool.join()
     scores_decreases = []
