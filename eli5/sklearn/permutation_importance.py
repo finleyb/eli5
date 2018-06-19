@@ -204,14 +204,7 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         feature_importances = []  # type: List
         base_scores = []  # type: List[float]
         pool = Pool(8) #, maxtasksperchild=1)
-        result = pool.map(
-        lambda train, test:
-            est = clone(self.estimator).fit(X[train], y[train], **fit_params)
-            score_func = partial(self.scorer_, est)
-            _base_score, _importances = self._get_score_importances(
-                score_func, X[test], y[test])
-            ([_base_score] * len(_importances),_importances)
-        ,cv.split(X, y, groups),chunksize=1)
+        result = pool.map(lambda train, test: _parallel_cv_scores_sub(self, X, y, train, test, **fit_params), cv.split(X, y, groups), chunksize=1)
         #close and join the pools
         pool.close()
         pool.join()
@@ -219,8 +212,14 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         flatten = lambda z: [x for y in z for x in y]
         base_scores = flatten(map(list, zip(*result))[0])
         feature_importances = flatten(map(list, zip(*result))[1])        
-
         return base_scores, feature_importances
+
+
+    def _parallel_cv_scores_sub(self, X, y, train, test, **fit_params):
+            est = clone(self.estimator).fit(X[train], y[train], **fit_params)
+            score_func = partial(self.scorer_, est)
+            _base_score, _importances = self._get_score_importances(score_func, X[test], y[test])
+            return ([_base_score] * len(_importances),_importances)
 
     def _non_cv_scores_importances(self, X, y):
         score_func = partial(self.scorer_, self.wrapped_estimator_)
