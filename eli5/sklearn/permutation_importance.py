@@ -203,7 +203,7 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         feature_importances = []  # type: List
         base_scores = []  # type: List[float]
-        pool = Pool(16) #, maxtasksperchild=1)
+        pool = Pool(20) #, maxtasksperchild=1)
         result = pool.map(lambda train_test: self._parallel_cv_scores_sub(X, y, *train_test, **fit_params), cv.split(X, y, groups), chunksize=1)
         #close and join the pools
         pool.close()
