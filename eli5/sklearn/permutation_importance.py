@@ -154,7 +154,7 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         self.n_jobs = n_jobs
         self.rng_ = check_random_state(random_state)
 
-    def fit(self, X, y, groups=None, **fit_params):
+    def fit(self, X, y, groups=None **fit_params):
         # type: (...) -> PermutationImportance
         """Compute ``feature_importances_`` attribute and optionally
         fit the base estimator.
@@ -198,12 +198,12 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         self.feature_importances_std_ = np.std(results, axis=0)
         return self
 
-    def _cv_scores_importances(self, X, y, groups=None, **fit_params):
+    def _cv_scores_importances(self, X, y, groups=None, n_jobs=1, **fit_params):
         assert self.cv is not None
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         feature_importances = []  # type: List
         base_scores = []  # type: List[float]
-        pool = Pool(20) #, maxtasksperchild=1)
+        pool = Pool(self.n_jobs) #, maxtasksperchild=1)
         result = pool.map(lambda train_test: self._parallel_cv_scores_sub(X, y, *train_test, **fit_params), cv.split(X, y, groups), chunksize=1)
         #close and join the pools
         pool.close()
