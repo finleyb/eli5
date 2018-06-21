@@ -154,7 +154,7 @@ class PermutationImportance(BaseEstimator, MetaEstimatorMixin):
         self.n_jobs = n_jobs
         self.rng_ = check_random_state(random_state)
 
-    def fit(self, X, y, groups=None **fit_params):
+    def fit(self, X, y, groups=None, **fit_params):
         # type: (...) -> PermutationImportance
         """Compute ``feature_importances_`` attribute and optionally
         fit the base estimator.
